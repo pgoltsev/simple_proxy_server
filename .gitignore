@@ -60,3 +60,4 @@ target/
 
 # IntellijIdea settings
 .idea/
+*.iml
