@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 try:
     from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 except ImportError:
@@ -25,7 +27,7 @@ except ImportError:
 import webbrowser
 
 import re
-import setup
+import config
 
 
 class Transformer(object):
@@ -44,9 +46,9 @@ transformer = Transformer()
 
 class ContentParser(HTMLParser):
     # content in those tags excluded from replacement
-    exclude_text_in_tags = setup.EXCLUDE_TAGS
-    content_tag = setup.CONTENT_TAG_FOR_PARSING[0]
-    content_tag_params = list(setup.CONTENT_TAG_FOR_PARSING[1:])
+    exclude_text_in_tags = config.EXCLUDE_TAGS
+    content_tag = config.CONTENT_TAG_FOR_PARSING[0]
+    content_tag_params = list(config.CONTENT_TAG_FOR_PARSING[1:])
 
     def __init__(self, transform_func):
         self.transform_func = transform_func
@@ -115,7 +117,7 @@ class HttpProcessor(BaseHTTPRequestHandler):
     def get_encoding(headers):
         content_type = headers['content-type']
         enc_list = content_type.split('charset=')
-        return enc_list[-1] if len(enc_list) > 1 else setup.DEFAULT_ENCODING
+        return enc_list[-1] if len(enc_list) > 1 else config.DEFAULT_ENCODING
 
     @staticmethod
     def unzip_response(response):
@@ -138,7 +140,7 @@ class HttpProcessor(BaseHTTPRequestHandler):
         return content_parser.result_html.encode(encoding)
 
     def redirect_to_original_site(self):
-        url_parts = urlparse.urlparse(setup.SOURCE_URL)
+        url_parts = urlparse.urlparse(config.SOURCE_URL)
         self.send_headers(302, {
             'Location': urlparse.urlunparse([url_parts.scheme, url_parts.netloc, self.path, '', '', ''])
         })
@@ -149,18 +151,18 @@ class HttpProcessor(BaseHTTPRequestHandler):
             self.redirect_to_original_site()
             return
 
-        response = urlopen(self.create_request(setup.SOURCE_URL))
+        response = urlopen(self.create_request(config.SOURCE_URL))
         encoding = self.get_encoding(response.headers)
         response = self.unzip_response(response)
         self.send_headers(200, {'Content-Type': 'text/html'})
         self.wfile.write(self.read_data_and_replace_content(response, encoding))
 
 
-server = HTTPServer((setup.SERVER_ADDRESS, setup.SERVER_PORT), HttpProcessor)
+server = HTTPServer((config.SERVER_ADDRESS, config.SERVER_PORT), HttpProcessor)
 
 if __name__ == '__main__':
-    url = 'http://%s:%d/' % (setup.SERVER_ADDRESS, setup.SERVER_PORT)
+    url = 'http://%s:%d/' % (config.SERVER_ADDRESS, config.SERVER_PORT)
     print('Open {} in your browser.'.format(url))
-    if setup.OPEN_AT_STARTUP:
+    if config.OPEN_AT_STARTUP:
         webbrowser.open(url)
     server.serve_forever()
